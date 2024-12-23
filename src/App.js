@@ -5,28 +5,40 @@ const API_URL = 'http://52.250.54.24:3500/api/node/';
 
 function App() {
     const [sensorData, setSensorData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [nodeValue, setNodeValue] = useState(81029); // Default nodeValue
     const [inputValue, setInputValue] = useState(81029); // Controlled input state
+    const [isFirstLoad, setIsFirstLoad] = useState(true); // Track if it's the first load
+    const [lastUpdated, setLastUpdated] = useState(null); // Last successful update timestamp
+
+    const fetchData = async () => {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+
+            setSensorData(data);
+            setError(null); // Clear any previous errors
+            setLastUpdated(new Date()); // Set the last updated timestamp
+
+            // Mark the first load as complete
+            if (isFirstLoad) {
+                setIsFirstLoad(false);
+            }
+        } catch (err) {
+            setError(err);
+            console.error('Error fetching data:', err);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setIsLoading(true);
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                setSensorData(data);
-            } catch (err) {
-                setError(err);
-                console.error('Error fetching data:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        fetchData(); // Initial fetch
 
-        fetchData();
-    }, []);
+        const interval = setInterval(() => {
+            fetchData(); // Periodic updates
+        }, 10000);
+
+        return () => clearInterval(interval); // Cleanup on unmount
+    }, [isFirstLoad]);
 
     const getLatestSensorData = () => {
         if (!sensorData || !sensorData.response) {
@@ -52,8 +64,21 @@ function App() {
         setNodeValue(Number(inputValue)); // Update the nodeValue state
     };
 
+    const getUpdateMessage = () => {
+        if (!lastUpdated) return "Loading...";
+
+        const secondsAgo = Math.floor((new Date() - lastUpdated) / 1000);
+        return error
+            ? `Could not update ${secondsAgo} seconds ago`
+            : `Updated ${secondsAgo} seconds ago`;
+    };
+
     return (
         <div className="App">
+            <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                <p>{getUpdateMessage()}</p>
+            </div>
+
             <form onSubmit={handleSubmit}>
                 <label htmlFor="nodeValueInput">Enter Node Value: </label>
                 <input
@@ -65,11 +90,9 @@ function App() {
                 <button type="submit">Submit</button>
             </form>
 
-            {isLoading ? (
+            {isFirstLoad ? (
                 <p>Loading...</p>
-            ) : error ? (
-                <p>Error: {error.message}</p>
-            ) : sensorData ? (
+            ) : (
                 <div>
                     <h2>PM2.5 & PM10 Graph (Last 10 Items)</h2>
                     <LineChart width={600} height={300} data={getLatestSensorData()}>
@@ -83,13 +106,14 @@ function App() {
 
                     <h2>Sensor Data</h2>
                     <ul>
-                        {sensorData.response
+                        {sensorData && sensorData.response
                             .filter((item) => item.nodeValue === nodeValue)
                             .map((item, index) => (
                                 <li key={index}>
                                     <h3>Node Value: {item.nodeValue}</h3>
                                     <p>Device ID: {item.activityData.device_id}</p>
                                     <p>Timestamp: {item.createdAt}</p>
+                                    {/* ... other fields ... */}
                                     <p>Temperature: {item.activityData.data.temperature}</p>
                                     <p>Humidity: {item.activityData.data.humidity}</p>
                                     <p>PM 2.5: {item.activityData.data.pm2_5}</p>
@@ -110,9 +134,11 @@ function App() {
                                 </li>
                             ))}
                     </ul>
+
+                    {error && !sensorData && (
+                        <p>Error: {error.message}. No previous data available.</p>
+                    )}
                 </div>
-            ) : (
-                <p>No Sensor Data</p>
             )}
         </div>
     );
