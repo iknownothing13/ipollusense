@@ -10,7 +10,7 @@ function App() {
     const [inputValue, setInputValue] = useState(81029); // Controlled input state
     const [isFirstLoad, setIsFirstLoad] = useState(true); // Track if it's the first load
     const [lastUpdated, setLastUpdated] = useState(null); // Last successful update timestamp
-
+// shows previous data even when updating every 10 seconds , during the update , instead of showing empy data and loading text
     const fetchData = async () => {
         try {
             const response = await fetch(API_URL);
