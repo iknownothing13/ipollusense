@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+
+const API_URL = 'http://52.250.54.24:3500/api/node/';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [sensorData, setSensorData] = useState(null); // Initialize with null
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                setSensorData(data);
+            } catch (error) {
+                setError(error);
+                console.error('Error fetching data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    return (
+        <div className="App">
+            {isLoading ? (
+                <p>Loading...</p>
+            ) : error ? (
+                <p>Error: {error.message}</p>
+            ) : sensorData ? (
+                <div>
+                    <p>{sensorData.response[0].nodeValue}</p>
+                </div>
+            ) : (
+                <p>No data available.</p>
+            )}
+        </div>
+    );
 }
 
 export default App;
