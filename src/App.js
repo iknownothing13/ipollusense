@@ -90,7 +90,23 @@ function App() {
                                     <h3>Node Value: {item.nodeValue}</h3>
                                     <p>Device ID: {item.activityData.device_id}</p>
                                     <p>Timestamp: {item.createdAt}</p>
-                                    {/* ... other fields ... */}
+                                    <p>Temperature: {item.activityData.data.temperature}</p>
+                                    <p>Humidity: {item.activityData.data.humidity}</p>
+                                    <p>PM 2.5: {item.activityData.data.pm2_5}</p>
+                                    <p>PM 10: {item.activityData.data.pm10}</p>
+                                    <p>PM 1: {item.activityData.data.pm1}</p>
+                                    <p>CO: {item.activityData.data.co}</p>
+                                    <p>VOC: {item.activityData.data.voc}</p>
+                                    <p>CO2: {item.activityData.data.co2}</p>
+                                    {/* Add other fields from activityData.data here */}
+                                    <p>AQI Dust (Calculated): {item.activityData.calculated.aqi_dust}</p>
+                                    <p>AQI CO (Calculated): {item.activityData.calculated.aqi_co}</p>
+                                    {/* Add other fields from activityData.calculated here */}
+                                    {/*<p>AQI Dust (Predicted): {item.activityData.predicted.aqi_dust}</p>*/}
+                                    {/*<p>AQI CO (Predicted): {item.activityData.predicted.aqi_co}</p>*/}
+                                    {/* Add other fields from activityData.predicted here */}
+                                    <p>Dust Status: {item.activityData.status.dust}</p>
+                                    <p>CO Status: {item.activityData.status.co}</p>
                                 </li>
                             ))}
                     </ul>
