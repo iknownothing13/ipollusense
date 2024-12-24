@@ -181,7 +181,7 @@ const SensorDataCards = ({ data }) => (
                 textAlign: 'center',
             }}
         >
-            Sensor Data (Last 10 Items)
+            Sensor Data Items
         </Typography>
         <Grid container spacing={4}>
             {data.map((item, index) => (
@@ -367,6 +367,9 @@ const App = () => {
     const [inputValue, setInputValue] = useState(1192);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [isDefaultView, setIsDefaultView] = useState(true); // Tracks if default view is active
 
     const fetchData = async () => {
         try {
@@ -388,22 +391,33 @@ const App = () => {
         return () => clearInterval(interval);
     }, [nodeValue]);
 
-    const getLatestSensorData = () => {
-        if (!sensorData || !sensorData.response) return [];
+    const getFilteredSensorData = () => {
+        if (isDefaultView || !startDate || !endDate) {
+            return getLast10SensorData(); // Show recent data if default view or no date range is selected
+        }
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
         return sensorData.response
             .filter((item) => item.nodeValue === nodeValue)
-            .slice(-10)
-            .map((item, index) => ({
-                index,
-                pm2_5: item.activityData.data.pm2_5,
-                pm10: item.activityData.data.pm10,
-                pm1:item.activityData.data.pm1,
-                temperature:item.activityData.data.temperature,
-                humidity:item.activityData.data.humidity,
-                co:item.activityData.data.co,
-                voc:item.activityData.data.voc,
-                co2:item.activityData.data.co2
-            }));
+            .filter((item) => {
+                const itemDate = new Date(item.createdAt);
+                return itemDate >= start && itemDate <= end;
+            });
+    };
+
+    const getGraphData = () => {
+        return getFilteredSensorData().map((item, index) => ({
+            index,
+            pm2_5: item.activityData.data.pm2_5,
+            pm10: item.activityData.data.pm10,
+            pm1: item.activityData.data.pm1,
+            temperature: item.activityData.data.temperature,
+            humidity: item.activityData.data.humidity,
+            co: item.activityData.data.co,
+            voc: item.activityData.data.voc,
+            co2: item.activityData.data.co2,
+        }));
     };
 
     const getLast10SensorData = () => {
@@ -416,6 +430,13 @@ const App = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         setNodeValue(Number(inputValue));
+        setIsDefaultView(false); // Switch to filtered view
+    };
+
+    const handleDefaultView = () => {
+        setIsDefaultView(true); // Switch back to default view
+        setStartDate('');
+        setEndDate('');
     };
 
     const getUpdateMessage = () => {
@@ -462,19 +483,61 @@ const App = () => {
                         color="primary"
                         onClick={handleSubmit}
                         size="large"
+                        style={{ marginRight: '10px' }}
                     >
                         Submit
                     </Button>
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={handleDefaultView}
+                        size="large"
+                    >
+                        View Recent Data
+                    </Button>
+                </Box>
+
+                {/* Date Range Inputs */}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginBottom: '20px',
+                    }}
+                >
+                    <TextField
+                        label="Start Date"
+                        type="datetime-local"
+                        value={startDate}
+                        onChange={(e) => {
+                            setStartDate(e.target.value);
+                            setIsDefaultView(false); // Switch to filtered view if user provides a date
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        style={{ marginRight: '10px' }}
+                    />
+                    <TextField
+                        label="End Date"
+                        type="datetime-local"
+                        value={endDate}
+                        onChange={(e) => {
+                            setEndDate(e.target.value);
+                            setIsDefaultView(false); // Switch to filtered view if user provides a date
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                    />
                 </Box>
 
                 {/* Graph Section */}
-                <GraphWithFeatureSelection data={getLatestSensorData()} />
+                <GraphWithFeatureSelection data={getGraphData()} />
 
                 {/* Sensor Data Section */}
-                <SensorDataCards data={getLast10SensorData()} />
+                <SensorDataCards data={getFilteredSensorData()} />
             </Box>
         </div>
     );
 };
+
+
 
 export default App;
