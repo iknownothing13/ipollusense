@@ -17,6 +17,7 @@ import {
 import Divider from '@mui/material/Divider';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend ,CartesianGrid} from 'recharts';
 import { FiCloud } from 'react-icons/fi';
+import AboutProjectModel from "./AboutProjectModel";
 
 const API_URL = 'http://52.250.54.24:3500/api/node/';
 
@@ -540,6 +541,8 @@ const App = () => {
                 {/* Sensor Data Section */}
                 <SensorDataCards data={getFilteredSensorData()} />
             </Box>
+            {/* Include the AboutProjectModal widget */}
+            <AboutProjectModel />
         </div>
     );
 };
