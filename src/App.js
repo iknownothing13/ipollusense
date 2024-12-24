@@ -10,65 +10,159 @@ import {
     Grid,
     Card,
     CardContent,
+    Checkbox,
+    FormControlLabel,
+    FormGroup,
 } from '@mui/material';
 import Divider from '@mui/material/Divider';
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Legend,
-    CartesianGrid,
-    ResponsiveContainer,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend ,CartesianGrid} from 'recharts';
 import { FiCloud } from 'react-icons/fi';
 
 const API_URL = 'http://52.250.54.24:3500/api/node/';
 
-const Graph = ({ data }) => (
-    <Box
-        sx={{
-            backgroundColor: '#f1f8e9',
-            borderRadius: '10px',
-            padding: '20px',
-            marginBottom: '20px',
-            height: '500px', // Fixed height for graph section
-        }}
-    >
-        <Typography variant="h6" gutterBottom>
-            PM2.5 & PM10 Graph (Last 10 Items)
-        </Typography>
-        <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-                data={data}
-                margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+const GraphWithFeatureSelection = ({ data }) => {
+    const allFeatures = [
+        { key: 'pm2_5', label: 'PM2.5', color: '#FF5733' },
+        { key: 'pm10', label: 'PM10', color: '#33FF57' },
+        { key: 'pm1', label: 'PM1', color: '#3357FF' },
+        { key: 'temperature', label: 'Temperature', color: '#FFC300' },
+        { key: 'humidity', label: 'Humidity', color: '#DAF7A6' },
+        { key: 'co', label: 'CO', color: '#C70039' },
+        { key: 'voc', label: 'VOC', color: '#900C3F' },
+        { key: 'co2', label: 'CO2', color: '#581845' },
+    ];
+
+    const [selectedFeatures, setSelectedFeatures] = useState(['pm2_5', 'pm10']);
+
+    const handleFeatureToggle = (key) => {
+        setSelectedFeatures((prev) =>
+            prev.includes(key) ? prev.filter((feature) => feature !== key) : [...prev, key]
+        );
+    };
+
+    const formatTooltipValue = (value) => {
+        return value !== null && value !== undefined ? value.toFixed(2) : 'N/A';
+    };
+
+    return (
+        <Box sx={{ width: '100%', textAlign: 'center', p: 2 }}>
+            {/* Graph Title */}
+            <Typography
+                variant="h4"
+                sx={{
+                    color: '#1976d2',
+                    fontWeight: 'bold',
+                    mb: 3,
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                }}
             >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="index" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                    type="monotone"
-                    dataKey="pm2_5"
-                    stroke="#ff7043"
-                    strokeWidth={3}
-                    name="PM2.5"
-                    dot={{ r: 6 }}
-                />
-                <Line
-                    type="monotone"
-                    dataKey="pm10"
-                    stroke="#29b6f6"
-                    strokeWidth={3}
-                    name="PM10"
-                    dot={{ r: 6 }}
-                />
-            </LineChart>
-        </ResponsiveContainer>
-    </Box>
-);
+                iPolluSense Dynamic Sensor Data Graph
+            </Typography>
+
+            {/* Checkbox List for Features */}
+            <FormGroup row sx={{ justifyContent: 'center', mb: 3 }}>
+                {allFeatures.map((feature) => (
+                    <FormControlLabel
+                        key={feature.key}
+                        control={
+                            <Checkbox
+                                checked={selectedFeatures.includes(feature.key)}
+                                onChange={() => handleFeatureToggle(feature.key)}
+                                sx={{
+                                    color: feature.color,
+                                    '&.Mui-checked': {
+                                        color: feature.color,
+                                    },
+                                }}
+                            />
+                        }
+                        label={
+                            <span style={{ color: feature.color, fontWeight: 'bold' }}>
+                                {feature.label}
+                            </span>
+                        }
+                        sx={{
+                            marginRight: '20px',
+                        }}
+                    />
+                ))}
+            </FormGroup>
+
+            {/* Line Chart */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    p: 2,
+                    borderRadius: '10px',
+                    boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.2)',
+                    background: 'linear-gradient(135deg, #f3f4f6, #e2e8f0)',
+                }}
+            >
+                <LineChart
+                    width={Math.max(window.innerWidth * 0.85, 800)}
+                    height={500}
+                    data={data.map((item, index) => ({
+                        index, // Ensure an index key exists
+                        ...item, // Spread the data object for flexible features
+                    }))}
+                    margin={{
+                        top: 20,
+                        right: 40,
+                        left: 20,
+                        bottom: 20,
+                    }}
+                >
+                    <defs>
+                        {allFeatures.map((feature) => (
+                            <linearGradient key={feature.key} id={feature.key} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={feature.color} stopOpacity={0.8} />
+                                <stop offset="95%" stopColor={feature.color} stopOpacity={0.3} />
+                            </linearGradient>
+                        ))}
+                    </defs>
+                    <XAxis dataKey="index" tick={{ fill: '#555', fontWeight: 'bold' }} />
+                    <YAxis
+                        tick={{ fill: '#555', fontWeight: 'bold' }}
+                        tickFormatter={(value) => value.toFixed(2)}
+                    />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #ccc',
+                            borderRadius: '5px',
+                        }}
+                        itemStyle={{ fontWeight: 'bold', color: '#333' }}
+                        formatter={formatTooltipValue}
+                    />
+                    <Legend
+                        wrapperStyle={{
+                            bottom: -10,
+                            fontWeight: 'bold',
+                            color: '#555',
+                        }}
+                    />
+                    {allFeatures
+                        .filter((feature) => selectedFeatures.includes(feature.key))
+                        .map((feature) => (
+                            <Line
+                                key={feature.key}
+                                type="monotone"
+                                dataKey={feature.key}
+                                stroke={`url(#${feature.key})`}
+                                strokeWidth={3}
+                                dot={{ r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={feature.label}
+                            />
+                        ))}
+                </LineChart>
+            </Box>
+        </Box>
+    );
+};
 
 const SensorDataCards = ({ data }) => (
     <Box
@@ -269,8 +363,8 @@ const SensorDataCards = ({ data }) => (
 const App = () => {
     const [sensorData, setSensorData] = useState(null);
     const [error, setError] = useState(null);
-    const [nodeValue, setNodeValue] = useState(81029);
-    const [inputValue, setInputValue] = useState(81029);
+    const [nodeValue, setNodeValue] = useState(1192);
+    const [inputValue, setInputValue] = useState(1192);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -290,7 +384,7 @@ const App = () => {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 5000);
+        const interval = setInterval(fetchData, 15000);
         return () => clearInterval(interval);
     }, [nodeValue]);
 
@@ -303,6 +397,12 @@ const App = () => {
                 index,
                 pm2_5: item.activityData.data.pm2_5,
                 pm10: item.activityData.data.pm10,
+                pm1:item.activityData.data.pm1,
+                temperature:item.activityData.data.temperature,
+                humidity:item.activityData.data.humidity,
+                co:item.activityData.data.co,
+                voc:item.activityData.data.voc,
+                co2:item.activityData.data.co2
             }));
     };
 
@@ -368,7 +468,7 @@ const App = () => {
                 </Box>
 
                 {/* Graph Section */}
-                <Graph data={getLatestSensorData()} />
+                <GraphWithFeatureSelection data={getLatestSensorData()} />
 
                 {/* Sensor Data Section */}
                 <SensorDataCards data={getLast10SensorData()} />
