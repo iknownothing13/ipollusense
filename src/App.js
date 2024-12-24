@@ -103,8 +103,8 @@ const GraphWithFeatureSelection = ({ data }) => {
                 <LineChart
                     width={Math.max(window.innerWidth * 0.85, 800)}
                     height={500}
-                    data={data.map((item, index) => ({
-                        index, // Ensure an index key exists
+                    data={data.map((item) => ({
+                        timestamp: new Date(item.createdAt).toLocaleString(),
                         ...item, // Spread the data object for flexible features
                     }))}
                     margin={{
@@ -122,7 +122,13 @@ const GraphWithFeatureSelection = ({ data }) => {
                             </linearGradient>
                         ))}
                     </defs>
-                    <XAxis dataKey="index" tick={{ fill: '#555', fontWeight: 'bold' }} />
+                    <XAxis
+                        dataKey="timestamp" // Use timestamp for x-axis
+                        tick={{ fill: '#555', fontWeight: 'bold' }}
+                        angle={-45} // Optional: Rotate labels if timestamps are long
+                        textAnchor="end"
+                        interval={0} // Show all ticks
+                    />
                     <YAxis
                         tick={{ fill: '#555', fontWeight: 'bold' }}
                         tickFormatter={(value) => value.toFixed(2)}
@@ -408,7 +414,7 @@ const App = () => {
 
     const getGraphData = () => {
         return getFilteredSensorData().map((item, index) => ({
-            index,
+            timestamp: new Date(item.createdAt).toLocaleString(),
             pm2_5: item.activityData.data.pm2_5,
             pm10: item.activityData.data.pm10,
             pm1: item.activityData.data.pm1,
